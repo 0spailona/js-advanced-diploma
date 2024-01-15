@@ -13,4 +13,11 @@
  * */
 export default class Team {
   // TODO: write your logic here
+  constructor() {
+    this.members = [];
+  }
+
+  add(char) {
+    this.members.push(char)
+  }
 }
