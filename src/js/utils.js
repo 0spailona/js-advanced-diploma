@@ -64,55 +64,36 @@ export function calcHealthLevel(health) {
   return 'high';
 }
 
-export function calcStepPossible(indexChar,indexCell,maxStep,boardSize) {
-  if(indexCell === indexChar){
+
+
+function getCoordinates(index, boardSize) {
+  const x = index % boardSize;
+  const y = Math.trunc(index / boardSize);
+
+  return {x, y}
+}
+
+function getCellIndex(row, col, boardSize) {
+  return row * boardSize + col
+}
+
+export function calcTargetPossible(charIndex, cellIndex, maxRange, boardSize) {
+  if (cellIndex === charIndex) {
     return false
   }
-  //const boardSize = 5;
+  const charCoordinates = getCoordinates(charIndex, boardSize);
+  const cellCoordinates = getCoordinates(cellIndex, boardSize);
+
+  const absX = Math.abs(charCoordinates.x - cellCoordinates.x);
+  const absY = Math.abs(charCoordinates.y - cellCoordinates.y);
   // vertical
-  const a = indexCell % boardSize;
-  const b = indexChar % boardSize;
-  if ((a === b) && (((indexCell - a) / boardSize - (indexChar - b) / boardSize) <= maxStep)) {
+  if (charCoordinates.x === cellCoordinates.x && absY <= maxRange) {
     return true
   }
   // horizontal
-  const abc = Math.abs(indexCell - indexChar);
-  // find leftBoard
-  let c = indexChar;
-  while (c % boardSize !== 0) {
-    c--;
-  }
-  let d = indexCell;
-  while (d % boardSize !== 0) {
-    d--;
-  }
-  if (c === d) {
+  if (charCoordinates.y === cellCoordinates.y && absX <= maxRange) {
     return true
   }
-
   // diagonal
-  function isDiagonal(indexMax, indexMin, difference) {
-    let max = indexMax;
-    while (max > indexMin) {
-      max = max - difference;
-    }
-    return max === indexMin;
-  }
-
-  const maxIndex = Math.max(indexCell, indexChar);
-  const minIndex = Math.min(indexCell, indexChar);
-
-  if ((abc % (boardSize + 1) === 0) || (abc % (boardSize - 1) === 0)) {
-    if (abc / (boardSize + 1) <= maxStep) {
-      if (isDiagonal(maxIndex, minIndex, boardSize + 1)) {
-        return true
-      }
-    }
-    if (abc / (boardSize - 1) <= maxStep) {
-      if (isDiagonal(maxIndex, minIndex, boardSize - 1)) {
-        return true
-      }
-    }
-  }
-  return false
+  return absX === absY && absY <= maxRange;
 }

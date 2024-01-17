@@ -34,32 +34,38 @@ export default class Character {
         this.attack = 25;
         this.defence = 25;
         this.maxStep = 2;
+        this.attackRange = 2;
 
         break;
       case CharacterType.Swordsman:
         this.attack = 40;
         this.defence = 10;
         this.maxStep = 4;
+        this.attackRange = 1;
         break;
       case CharacterType.Magician:
         this.attack = 10;
         this.defence = 40;
         this.maxStep = 1;
+        this.attackRange = 4;
         break;
       case CharacterType.Daemon:
         this.attack = 10;
         this.defence = 10;
         this.maxStep = 1;
+        this.attackRange = 4;
         break;
       case CharacterType.Vampire:
         this.attack = 25;
         this.defence = 25;
         this.maxStep = 2;
+        this.attackRange = 2;
         break;
       case CharacterType.Undead:
         this.attack = 40;
         this.defence = 10;
         this.maxStep = 4;
+        this.attackRange = 1;
         break;
     }
   }

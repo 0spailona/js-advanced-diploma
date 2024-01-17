@@ -1,6 +1,6 @@
 const selectedColors = {
   playerCharacterSelected:'yellow',
   cellForStep:'green',
-  computerCharacterSelected:'red'
+  targetForAttack:'red'
 }
 export default selectedColors

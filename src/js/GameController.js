@@ -4,7 +4,7 @@ import {generatorRandomNumber} from "./generators";
 import {CharacterType} from "./characters/CharacterType";
 import cursors from "./cursors";
 import selectedColors from "./selectedColors";
-import {calcStepPossible} from "./utils";
+import {calcTargetPossible} from "./utils";
 import Bowman from "./characters/Bowman";
 import Swordsman from "./characters/Swordsman";
 import Magician from "./characters/Magician";
@@ -36,7 +36,7 @@ export default class GameController {
     this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
     this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
     this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
-
+    this.playerMotion = true;
 
     this.gamePlay.drawUi(themes.prairie);
     const characterCount = 2;
@@ -82,14 +82,26 @@ export default class GameController {
 
   onCellClick(index) {
     // TODO: react to click
-    if(this.selectedCharacter){
-        this.gamePlay.deselectCell(this.selectedCharacter.position);
-        this.selectedCharacter = undefined;
-    }
+
     let character = this.allPositions.find(positionedCharacter => positionedCharacter.position === index);
     if (!character) {
+      if (this.selectedCell) {
+        let movingCharacter = this.allPositions.find(x => x.position === this.selectedCharacter.position);
+        movingCharacter.position = index;
+        this.gamePlay.redrawPositions(this.allPositions);
+        this.gamePlay.deselectCell(this.selectedCharacter.position);
+        this.gamePlay.deselectCell(this.selectedCell);
+        this.selectedCharacter = undefined;
+        this.selectedCell = undefined;
+        this.playerMotion = false;
+      }
       return
     }
+    if (this.selectedCharacter) {
+      this.gamePlay.deselectCell(this.selectedCharacter.position);
+      this.selectedCharacter = undefined;
+    }
+
     const positionCharacter = character.position;
     character = character.character;
 
@@ -97,7 +109,6 @@ export default class GameController {
       GamePlay.showError('Это не ваш персонаж! Выберете другого персонажа.');
       return;
     }
-
     this.selectedCharacter = {character, position: positionCharacter};
     this.gamePlay.selectCell(index, selectedColors.playerCharacterSelected);
   }
@@ -107,42 +118,45 @@ export default class GameController {
 
     let character = this.allPositions.find(positionedCharacter => positionedCharacter.position === index);
     if (!character) {
-      if (!this.selectedCharacter) {
-        return
-      }
-
-      if (calcStepPossible(this.selectedCharacter.position, index, this.selectedCharacter.character.maxStep, this.gamePlay.boardSize)) {
-        this.cursor = cursors.pointer;
-        this.gamePlay.setCursor(this.cursor);
-        this.gamePlay.selectCell(index, selectedColors.cellForStep);
-        this.selectedCellIndex = index;
-        return;
+      if (this.selectedCharacter) {
+        if (calcTargetPossible(this.selectedCharacter.position, index, this.selectedCharacter.character.maxStep, this.gamePlay.boardSize)) {
+          this.gamePlay.setCursor(cursors.pointer);
+          this.gamePlay.selectCell(index, selectedColors.cellForStep);
+          this.selectedCell = index;
+          return;
+        }
       }
       return
     }
 
+// Show tooltip
     character = character.character;
     const message = `\u{1F396} ${character.level} \u{2694} ${character.attack} \u{1F6E1} ${character.defence} \u{2764} ${character.health}`
     this.gamePlay.showCellTooltip(message, index)
 
+// Change cursor
     if (this.selectedCharacter) {
-      if ((character.type === CharacterType.Swordsman ||
-        character.type === CharacterType.Magician || character.type === CharacterType.Bowman)) {
-        this.cursor = cursors.pointer;
-        this.gamePlay.setCursor(this.cursor)
+      if (this.teamComputerPositions.find(x => x.position === index)) {
+        if (calcTargetPossible(this.selectedCharacter.position, index, this.selectedCharacter.character.maxStep, this.gamePlay.boardSize)) {
+          this.gamePlay.setCursor(cursors.crosshair);
+          this.gamePlay.selectCell(index, selectedColors.targetForAttack);
+          return
+        }
       }
     }
-
+    if (this.teamPlayerPositions.find(x => x.position === index)) {
+      this.gamePlay.setCursor(cursors.pointer);
+      return;
+    }
+    this.gamePlay.setCursor(cursors.notallowed);
   }
 
   onCellLeave(index) {
     // TODO: react to mouse leave
     this.gamePlay.hideCellTooltip(index)
-    if (this.cursor === cursors.pointer) {
-      this.cursor = cursors.auto;
-      this.gamePlay.setCursor(this.cursor)
-    }
-    if (this.selectedCellIndex && this.selectedCharacter.position !== index) {
+    this.gamePlay.setCursor(cursors.auto)
+    if (this.selectedCharacter?.position !== index) {
+      this.selectedCell = undefined;
       this.gamePlay.deselectCell(index)
     }
   }
