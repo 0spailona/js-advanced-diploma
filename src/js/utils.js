@@ -63,3 +63,56 @@ export function calcHealthLevel(health) {
 
   return 'high';
 }
+
+export function calcStepPossible(indexChar,indexCell,maxStep,boardSize) {
+  if(indexCell === indexChar){
+    return false
+  }
+  //const boardSize = 5;
+  // vertical
+  const a = indexCell % boardSize;
+  const b = indexChar % boardSize;
+  if ((a === b) && (((indexCell - a) / boardSize - (indexChar - b) / boardSize) <= maxStep)) {
+    return true
+  }
+  // horizontal
+  const abc = Math.abs(indexCell - indexChar);
+  // find leftBoard
+  let c = indexChar;
+  while (c % boardSize !== 0) {
+    c--;
+  }
+  let d = indexCell;
+  while (d % boardSize !== 0) {
+    d--;
+  }
+  if (c === d) {
+    return true
+  }
+
+  // diagonal
+  function isDiagonal(indexMax, indexMin, difference) {
+    let max = indexMax;
+    while (max > indexMin) {
+      max = max - difference;
+    }
+    return max === indexMin;
+  }
+
+  const maxIndex = Math.max(indexCell, indexChar);
+  const minIndex = Math.min(indexCell, indexChar);
+
+  if ((abc % (boardSize + 1) === 0) || (abc % (boardSize - 1) === 0)) {
+    if (abc / (boardSize + 1) <= maxStep) {
+      if (isDiagonal(maxIndex, minIndex, boardSize + 1)) {
+        return true
+      }
+    }
+    if (abc / (boardSize - 1) <= maxStep) {
+      if (isDiagonal(maxIndex, minIndex, boardSize - 1)) {
+        return true
+      }
+    }
+  }
+  return false
+}

@@ -1,4 +1,5 @@
 import { calcHealthLevel, calcTileType } from './utils';
+//import selectedColors from "./selectedColors";
 
 export default class GamePlay {
   constructor() {
@@ -178,6 +179,7 @@ export default class GamePlay {
   }
 
   static showError(message) {
+    console.log('alert',message)
     alert(message);
   }
 
@@ -185,7 +187,7 @@ export default class GamePlay {
     alert(message);
   }
 
-  selectCell(index, color = 'yellow') {
+  selectCell(index, color) {
     this.deselectCell(index);
     this.cells[index].classList.add('selected', `selected-${color}`);
   }
