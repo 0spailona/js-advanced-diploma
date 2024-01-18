@@ -85,70 +85,68 @@ export default class GameController {
 
     let character = this.allPositions.find(positionedCharacter => positionedCharacter.position === index);
     if (!character) {
-      if (this.selectedCell) {
-        let movingCharacter = this.allPositions.find(x => x.position === this.selectedCharacter.position);
-        movingCharacter.position = index;
-        this.gamePlay.redrawPositions(this.allPositions);
-        this.gamePlay.deselectCell(this.selectedCharacter.position);
-        this.gamePlay.deselectCell(this.selectedCell);
-        this.selectedCharacter = undefined;
-        this.selectedCell = undefined;
-        this.playerMotion = false;
+      // Moving character
+      if (this.selectedCell && this.selectedCharacter) {
+        this.movingCharacter(index)
       }
       return
     }
-    if (this.selectedCharacter) {
+
+    // Deselect character after double click
+    if (this.selectedCharacter?.position === index) {
       this.gamePlay.deselectCell(this.selectedCharacter.position);
       this.selectedCharacter = undefined;
+      return
+    }
+    // Select character after one click
+    if (this.teamPlayerPositions.find(x => x.position === index)) {
+      this.selectedCharacter = character;
+      this.gamePlay.selectCell(index, selectedColors.playerCharacterSelected);
+      return
     }
 
-    const positionCharacter = character.position;
-    character = character.character;
-
-    if (character.type === CharacterType.Daemon || character.type === CharacterType.Vampire || character.type === CharacterType.Undead) {
-      GamePlay.showError('Это не ваш персонаж! Выберете другого персонажа.');
-      return;
+    // Attack
+    const targetCharacter = this.teamComputerPositions.find(x => x.position === index);
+    if (targetCharacter) {
+      if (this.selectedCharacter && this.selectedCell === index){
+        this.countingDamage(index, targetCharacter);
+      }
+      else {
+        GamePlay.showError('Это не ваш персонаж! Выберете другого персонажа.');
+      }
     }
-    this.selectedCharacter = {character, position: positionCharacter};
-    this.gamePlay.selectCell(index, selectedColors.playerCharacterSelected);
   }
 
   onCellEnter(index) {
     // TODO: react to mouse enter
 
-    let character = this.allPositions.find(positionedCharacter => positionedCharacter.position === index);
+    let character = this.allPositions.find(x => x.position === index);
     if (!character) {
+
+      // Select cell, if character can move to cell
       if (this.selectedCharacter) {
-        if (calcTargetPossible(this.selectedCharacter.position, index, this.selectedCharacter.character.maxStep, this.gamePlay.boardSize)) {
-          this.gamePlay.setCursor(cursors.pointer);
-          this.gamePlay.selectCell(index, selectedColors.cellForStep);
-          this.selectedCell = index;
-          return;
-        }
+        this.showPossibleSteps(index, cursors.pointer, selectedColors.cellForStep)
       }
       return
     }
 
-// Show tooltip
-    character = character.character;
-    const message = `\u{1F396} ${character.level} \u{2694} ${character.attack} \u{1F6E1} ${character.defence} \u{2764} ${character.health}`
-    this.gamePlay.showCellTooltip(message, index)
+    // Show tooltip
+    this.showInfo(character.character, index)
 
-// Change cursor
-    if (this.selectedCharacter) {
-      if (this.teamComputerPositions.find(x => x.position === index)) {
-        if (calcTargetPossible(this.selectedCharacter.position, index, this.selectedCharacter.character.maxStep, this.gamePlay.boardSize)) {
-          this.gamePlay.setCursor(cursors.crosshair);
-          this.gamePlay.selectCell(index, selectedColors.targetForAttack);
-          return
-        }
-      }
+    // Select cell and change cursor, if character can attack
+    if (this.selectedCharacter && this.teamComputerPositions.find(x => x.position === index)) {
+      this.showPossibleSteps(index, cursors.crosshair, selectedColors.targetForAttack)
+      return;
     }
+    // Change cursor, if player can choose this character
     if (this.teamPlayerPositions.find(x => x.position === index)) {
       this.gamePlay.setCursor(cursors.pointer);
       return;
     }
-    this.gamePlay.setCursor(cursors.notallowed);
+    // Change cursor, if player cannot choose or attack this character
+    if (this.teamComputerPositions.find(x => x.position === index)) {
+      this.gamePlay.setCursor(cursors.notallowed);
+    }
   }
 
   onCellLeave(index) {
@@ -160,4 +158,44 @@ export default class GameController {
       this.gamePlay.deselectCell(index)
     }
   }
+
+  showInfo(character, index) {
+    const message = `\u{1F396} ${character.level} \u{2694} ${character.attack} \u{1F6E1} ${character.defence} \u{2764} ${character.health}`
+    this.gamePlay.showCellTooltip(message, index)
+  }
+
+  showPossibleSteps(index, cursor, color) {
+    if (calcTargetPossible(this.selectedCharacter.position, index, this.selectedCharacter.character.maxStep, this.gamePlay.boardSize)) {
+      this.gamePlay.setCursor(cursor);
+      this.gamePlay.selectCell(index, color);
+      this.selectedCell = index;
+    }
+  }
+
+  moveTransition() {
+    this.selectedCharacter = undefined;
+    this.selectedCell = undefined;
+    this.gamePlay.redrawPositions(this.allPositions);
+  }
+
+  countingDamage(index, targetCharacter) {
+      const damage = Math.max(this.selectedCharacter.character.attack - targetCharacter.character.defence, this.selectedCharacter.character.attack * 0.1);
+
+      (async function () {
+        this.gamePlay.deselectCell(this.selectedCell);
+        this.gamePlay.deselectCell(this.selectedCharacter.position);
+        await this.gamePlay.showDamage(index, damage);
+        targetCharacter.character.health = targetCharacter.character.health - damage;
+        this.moveTransition()
+      }).bind(this)()
+  }
+
+  movingCharacter(index) {
+    this.gamePlay.deselectCell(this.selectedCharacter.position);
+    this.gamePlay.deselectCell(this.selectedCell);
+    let movingCharacter = this.allPositions.find(x => x.position === this.selectedCharacter.position);
+    movingCharacter.position = index;
+    this.moveTransition()
+  }
 }
+
