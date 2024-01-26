@@ -10,7 +10,7 @@ import Team from "./Team";
  * возвращает новый экземпляр класса персонажа
  *
  */
-//export function* characterGenerator(allowedTypes, maxLevel) {
+
 export function* characterGenerator(allowedTypes, maxLevel) {
   // TODO: write logic here
   while (true){
@@ -31,10 +31,7 @@ export default function generateTeam(allowedTypes, maxLevel, characterCount) {
   // TODO: write logic here
   const team = new Team;
   let counter = characterCount;
-  /*while (counter !== 0){
-    team.members.push(characterGenerator(allowedTypes,maxLevel))
-    counter--;
-  }*/
+
   for (let member of characterGenerator(allowedTypes,maxLevel)){
     team.members.push(member);
     counter--;
@@ -42,10 +39,10 @@ export default function generateTeam(allowedTypes, maxLevel, characterCount) {
       break
     }
   }
-  //console.log(team.members)
   return team;
 }
 
 export function generatorRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min) + min)
 }
+

@@ -1,3 +1,4 @@
+
 /**
  * @todo
  * @param index - индекс поля
@@ -66,15 +67,15 @@ export function calcHealthLevel(health) {
 
 
 
-function getCoordinates(index, boardSize) {
+ export function getCoordinates(index, boardSize) {
   const x = index % boardSize;
   const y = Math.trunc(index / boardSize);
 
   return {x, y}
 }
 
-function getCellIndex(row, col, boardSize) {
-  return row * boardSize + col
+ export function getCellIndex(x, y, boardSize) {
+  return x * boardSize + y
 }
 
 export function calcTargetPossible(charIndex, cellIndex, maxRange, boardSize) {
@@ -97,3 +98,6 @@ export function calcTargetPossible(charIndex, cellIndex, maxRange, boardSize) {
   // diagonal
   return absX === absY && absY <= maxRange;
 }
+
+
+
