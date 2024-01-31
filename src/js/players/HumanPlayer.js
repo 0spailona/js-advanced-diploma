@@ -53,7 +53,7 @@ export default class HumanPlayer extends Player {
     }
 
     // Deselect character after double click
-    if (this.selectedCharacter?.position === index) {
+    if (this.selectedCharacter && this.selectedCharacter.position === index) {
       this.cleanupSelection();
       return
     }
@@ -86,7 +86,7 @@ export default class HumanPlayer extends Player {
 
   onCellLeave(index) {
     this.gamePlay.setCursor(cursors.auto)
-    if (this.selectedCharacter?.position !== index) {
+    if (!this.selectedCharacter || this.selectedCharacter.position !== index) {
       this.selectedCell = undefined;
       this.gamePlay.deselectCell(index)
     }

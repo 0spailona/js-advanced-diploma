@@ -51,7 +51,10 @@ export default class GameController {
     this.currentPlayer = this.playerFirst;
     this.gamePlay.showActiveTeam(this.currentPlayer.nameTeam)
     this.maxGameLevel = 4;
-    this.maxPoints = this.loadState()?.globalData.maxPoints || 0;
+
+    const state = this.loadState();
+
+    this.maxPoints =  (state ? state.globalData.maxPoints : 0) || 0;
     this.gamePlay.showHighScore(this.maxPoints)
     this.startGame(null, 1)
   }
