@@ -1,3 +1,4 @@
+import {characterFactoryByType} from "./generators";
 /**
  * Класс, представляющий персонажей команды
  *
@@ -17,7 +18,4 @@ export default class Team {
     this.members = [];
   }
 
-  add(char) {
-    this.members.push(char)
-  }
 }

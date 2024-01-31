@@ -23,7 +23,7 @@ body {
   font-size: 1rem;
   line-height: 1.5;
   border-radius: .25rem;
-  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+  transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
   border: none;
 }
 
@@ -41,7 +41,8 @@ body {
 
 .board {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  /* You're teaching bad!!!@*/
+  /*grid-template-columns: repeat(8, 1fr);*/
   grid-column-gap: 2px;
   grid-row-gap: 2px;
 }
@@ -251,4 +252,44 @@ body {
     top: -20px;
     font-size: 1.5rem;
   }
+}
+
+.info-and-settings-wrp {
+  margin: 40px auto;
+  flex-direction: column;
+  font-weight: 400;
+  font: 16px Arial;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #212529;
+}
+
+.info-and-settings {
+  margin: 5px auto;
+  width: 70%;
+  background-color: #f8f9fa;
+  text-align: center;
+  padding: .375rem .75rem;
+  border-radius: .25rem;
+}
+
+.team {
+  display: inline-flex;
+  justify-content: space-between;
+}
+
+.settings-new-game {
+  display: none;
+  /*display: flex;*/
+
+}
+
+.info {
+  display: flex;
+  /*display: none;*/
+}
+
+.game-over {
+  display: none;
+  /*display: flex;*/
 }

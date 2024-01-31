@@ -1,4 +1,4 @@
-import { calcHealthLevel, calcTileType } from './utils';
+import {calcHealthLevel, calcTileType} from './utils';
 //import selectedColors from "./selectedColors";
 
 export default class GamePlay {
@@ -13,6 +13,8 @@ export default class GamePlay {
     this.newGameListeners = [];
     this.saveGameListeners = [];
     this.loadGameListeners = [];
+
+    this.startGameListener = [];
   }
 
   bindToDOM(container) {
@@ -32,22 +34,67 @@ export default class GamePlay {
 
     this.container.innerHTML = `
       <div class="controls">
-        <button data-id="action-restart" class="btn">New Game</button>
-        <button data-id="action-save" class="btn">Save Game</button>
-        <button data-id="action-load" class="btn">Load Game</button>
+        <button class="btn" data-id="action-restart">New Game</button>
+        <button class="btn" data-id="action-save">Save Game</button>
+        <button class="btn" data-id="action-load">Load Game</button>
+        
       </div>
       <div class="board-container">
-        <div data-id="board" class="board"></div>
+        <div class="board" data-id="board" style="grid-template-columns: repeat(${this.boardSize}, 1fr);"></div>
       </div>
+      
+       <div class="info info-and-settings-wrp" style="width: calc(var(--cell-size) * ${this.boardSize});">
+          <span class="info-and-settings current-player">Активная команда: ${this.activeTeam}</span>
+          <span class="info-and-settings high-score">High score: ${this.highScore}</span>
+       </div>
+       
+       <div class="settings-new-game info-and-settings-wrp" style="width: calc(var(--cell-size) * ${this.boardSize});">
+          <div class=" info-and-settings  team team-humans">
+             <label>
+                Тип игрока команды людей
+             </label>
+             <select id="player-first">
+               <option value="human" selected>Человек</option>
+               <option value="computer">Компьютер</option>
+             </select>
+          </div>
+          <div class="info-and-settings team team-undead"
+            <label>
+              Тип игрока команды нежити
+            </label>
+            <select id="player-second">
+              <option value="computer" selected>Компьютер</option>
+              <option value="human">Человек</option>
+            </select>
+          </div>
+            <button data-id="start-game" class="info-and-settings  btn" style="width: 20%">Start game</button>
+          </div>
+          
+          <div class="game-over info-and-settings-wrp" style="width: calc(var(--cell-size) * ${this.boardSize});">
+            <span class="info-and-settings show-end">Game Over</span>
+            <span class="info-and-settings winner-player"></span>
+        </div>
+     
     `;
 
     this.newGameEl = this.container.querySelector('[data-id=action-restart]');
     this.saveGameEl = this.container.querySelector('[data-id=action-save]');
     this.loadGameEl = this.container.querySelector('[data-id=action-load]');
 
+    this.startGameEl = this.container.querySelector('.settings-new-game');
+    this.startGameBtnEl = this.container.querySelector('[data-id=start-game]');
+    this.gameInfoEl = this.container.querySelector('.info');
+    this.playerFirstEl = document.getElementById('player-first');
+    this.playerSecondEl = document.getElementById('player-second');
+    this.gameOverInfoEl = this.container.querySelector('.game-over');
+
     this.newGameEl.addEventListener('click', event => this.onNewGameClick(event));
     this.saveGameEl.addEventListener('click', event => this.onSaveGameClick(event));
     this.loadGameEl.addEventListener('click', event => this.onLoadGameClick(event));
+
+
+    //this.highScoreEl = this.container.querySelector('.high-score');
+    //console.log(this.highScoreEl.textContent)
 
     this.boardEl = this.container.querySelector('[data-id=board]');
 
@@ -146,6 +193,10 @@ export default class GamePlay {
     this.loadGameListeners.push(callback);
   }
 
+  addStartNewGameListener(callback) {
+    this.startGameListener.push(callback)
+  }
+
   onCellEnter(event) {
     event.preventDefault();
     const index = this.cells.indexOf(event.currentTarget);
@@ -178,8 +229,13 @@ export default class GamePlay {
     this.loadGameListeners.forEach(o => o.call(null));
   }
 
+  onStartGameClick(event) {
+    event.preventDefault();
+    this.startGameListener.forEach(o => o.call(null));
+  }
+
   static showError(message) {
-    console.log('alert',message)
+    console.log('alert', message)
     alert(message);
   }
 
@@ -205,7 +261,7 @@ export default class GamePlay {
   hideCellTooltip(index) {
     this.cells[index].title = '';
   }
-  
+
   showDamage(index, damage) {
     return new Promise((resolve) => {
       const cell = this.cells[index];
@@ -215,7 +271,7 @@ export default class GamePlay {
       cell.appendChild(damageEl);
 
       damageEl.addEventListener('animationend', () => {
-        cell.removeChild(damageEl);
+        cell.removeChild(cell.querySelector('span.damage'));
         resolve();
       });
     });
@@ -229,5 +285,32 @@ export default class GamePlay {
     if (this.container === null) {
       throw new Error('GamePlay not bind to DOM');
     }
+  }
+
+  showHighScore(maxPoints) {
+    this.highScore = maxPoints;
+  }
+
+  showActiveTeam(string) {
+    this.activeTeam = string;
+  }
+
+  showChoosePlayerType() {
+    this.startGameEl.style.display = 'flex';
+    this.gameOverInfoEl.style.display = 'none';
+    this.gameInfoEl.style.display = 'none';
+    this.startGameBtnEl.addEventListener('click', event => this.onStartGameClick(event));
+  }
+
+  getPlayerType() {
+    return {playerFirst: this.playerFirstEl.value, playerSecond: this.playerSecondEl.value}
+  }
+
+  showGameOver(string) {
+    console.log(string)
+    this.gameInfoEl.style.display = 'none';
+    this.gameOverInfoEl.style.display = 'flex';
+    this.gameOverInfoEl.querySelector('.winner-player').innerText = `Победила команда: ${string}`
+
   }
 }

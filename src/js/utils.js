@@ -1,4 +1,3 @@
-
 /**
  * @todo
  * @param index - индекс поля
@@ -66,16 +65,15 @@ export function calcHealthLevel(health) {
 }
 
 
-
- export function getCoordinates(index, boardSize) {
+export function getCoordinates(index, boardSize) {
   const x = index % boardSize;
   const y = Math.trunc(index / boardSize);
 
   return {x, y}
 }
 
- export function getCellIndex(x, y, boardSize) {
-  return x * boardSize + y
+export function getCellIndex(x, y, boardSize) {
+  return y * boardSize + x;
 }
 
 export function calcTargetPossible(charIndex, cellIndex, maxRange, boardSize) {
@@ -98,6 +96,59 @@ export function calcTargetPossible(charIndex, cellIndex, maxRange, boardSize) {
   // diagonal
   return absX === absY && absY <= maxRange;
 }
+
+function pushStepsArr(arr, charCoordinates, boardSize, changesX, changesY, maxRange) {
+  let x = charCoordinates.x + changesX;
+  let y = charCoordinates.y + changesY;
+
+  while (Math.abs(x - charCoordinates.x) <= maxRange &&
+         Math.abs(y - charCoordinates.y) <= maxRange &&
+         x >= 0 && x < boardSize && y >= 0 && y < boardSize) {
+
+    const index = getCellIndex(x, y, boardSize);
+
+    if (!arr.includes(index)) {
+      arr.push(index)
+    }
+    x = x + changesX;
+    y = y + changesY;
+  }
+  return arr
+}
+
+export function calcPossibleSteps(charIndex, maxRange, boardSize, arrImpossibleIndex) {
+  let arr = [];
+
+  const charCoordinates = getCoordinates(charIndex, boardSize);
+
+  pushStepsArr(arr, charCoordinates, boardSize, 1, 0, maxRange);
+  pushStepsArr(arr, charCoordinates, boardSize, -1, 0, maxRange);
+  pushStepsArr(arr, charCoordinates, boardSize, 0, -1, maxRange);
+  pushStepsArr(arr, charCoordinates, boardSize, 0, 1, maxRange);
+
+  pushStepsArr(arr, charCoordinates, boardSize, 1, 1, maxRange);
+  pushStepsArr(arr, charCoordinates, boardSize, -1, -1, maxRange);
+  pushStepsArr(arr, charCoordinates, charCoordinates, boardSize, 1, -1, maxRange);
+  pushStepsArr(arr, charCoordinates, boardSize, -1, 1, maxRange);
+
+
+  arr = arr.filter(i => !arrImpossibleIndex.includes(i));
+
+  //console.log("possible moves", charIndex, charCoordinates, arr.map(i => getCoordinates(i, boardSize)));
+
+  /*
+  while (arrImpossibleIndex.length > 0) {
+    const impossibleIndex = arrImpossibleIndex[0];
+    if (arr.includes(impossibleIndex)) {
+      arr.splice(arr.indexOf(impossibleIndex), 1)
+    }
+    arrImpossibleIndex.splice(0, 1)
+  }
+  */
+  return arr
+}
+
+
 
 
 

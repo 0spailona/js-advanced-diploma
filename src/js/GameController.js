@@ -9,9 +9,13 @@ import Magician from "./characters/Magician";
 import Vampire from "./characters/Vampire";
 import Undead from "./characters/Undead";
 import Daemon from "./characters/Daemon";
-import generateTeam, {generatorRandomNumber} from "./generators";
+import {generateTeam, characterFactoryByType, generatorRandomNumber} from "./generators";
 import PositionedCharacter from "./PositionedCharacter";
 import ComputerPlayer from "./players/ComputerPlayer";
+import cursors from "./cursors";
+import GameState from "./GameState";
+import Team from "./Team";
+
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -20,7 +24,7 @@ export default class GameController {
     this.playerFirst = {};
     this.playerSecond = {};
     this.currentPlayer = undefined;
-    this.maxGameLevel = 2;
+
   }
 
   init() {
@@ -28,60 +32,100 @@ export default class GameController {
       throw new Error("Init should be called only once");
     }
     this._initCalled = true;
-    //this.gameLevel = 1;
-    this.startGame(1)
-  }
-
-  startGame(gameLevel) {
-    // TODO: add event listeners to gamePlay events
-
-    this.gameLevel = gameLevel;
 
     this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
     this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
-    this.gamePlay.addCellClickListener(this.onCellClickOnField.bind(this));
-    this.gamePlay.addNewGameListener(this.onCellClickOnNewGame.bind(this));
+    this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
+    this.gamePlay.addNewGameListener(this.onNewGameClick.bind(this));
+    this.gamePlay.addSaveGameListener(this.onSaveGameClick.bind(this));
+    this.gamePlay.addLoadGameListener(this.onLoadGameClick.bind(this));
+
+    this.gamePlay.addStartNewGameListener(this.onStartGameClick.bind(this));
 
 
-    //this.gamePlay.addNewGameListener(this.onCellEnter.bind(this))
-    //this.gamePlay.addNewGameListener(this.onCellClick.bind(this));
+    /*const playerFirstGamePlay = new GamePlayWrapper(this.gamePlay, () => this.currentPlayer === this.playerFirst, this.doMove.bind(this));
+       this.playerFirst = {player: new HumanPlayer(playerFirstGamePlay), points: 0, nameTeam:'Герои'};
+       console.log(this.playerFirst)
+       const playerSecondGamePlay = new GamePlayWrapper(this.gamePlay, () => this.currentPlayer === this.playerSecond, this.doMove.bind(this));
+       //this.playerSecond = {player: new HumanPlayer(playerSecondGamePlay), points: 0};
+       this.playerSecond = {player: new ComputerPlayer(playerSecondGamePlay), points: 0, nameTeam:'Нежить'};*/
+    this.initPlayers(null, null)
+    this.initNewGame()
+  }
 
 
-    // Draw empty field
-    this.gamePlay.drawUi(themes[(gameLevel - 1) % themes.length]);
+  initNewGame() {
 
-    // Possible type of characters for each team
-    const possibleTypesFirstTeam = [Bowman, Swordsman, Magician];
-    const possibleTypesSecondTeam = [Vampire, Undead, Daemon];
-    this.possibleColumns = 2;
+    this.currentPlayer = this.playerFirst;
+    this.gamePlay.showActiveTeam(this.currentPlayer.nameTeam)
+    //this.gameLevel = 1;
+    this.maxGameLevel = 4;
+    this.maxPoints = this.loadState()?.globalData.maxPoints || 0;
+    //this.saveMaxPoints();
+    //console.log(this.maxPoints)
+    this.gamePlay.showHighScore(this.maxPoints)
+    this.startGame(null, 1)
+  }
 
-    this.characterCountInTeam = gameLevel + 1;
-    this.maxLevel = gameLevel;
+  startGame(gameSavingData, gameLevel) {
+    // TODO: add event listeners to gamePlay events
+    if (!gameSavingData) {
+      this.gameLevel = gameLevel;
 
-    const axisOffsetFirst = 0;
-    const axisOffsetSecond = this.gamePlay.boardSize - this.possibleColumns;
+      // Draw empty field
+      this.gamePlay.drawUi(themes[(gameLevel - 1) % themes.length]);
 
-    if (!this.currentPlayer) {
-      const playerFirstGamePlay = new GamePlayWrapper(this.gamePlay, () => this.currentPlayer === this.playerFirst, this.doMove.bind(this));
-      this.playerFirst = {player: new HumanPlayer(playerFirstGamePlay)};
-      const playerSecondGamePlay = new GamePlayWrapper(this.gamePlay, () => this.currentPlayer === this.playerSecond, this.doMove.bind(this));
-      this.playerSecond = {player: new HumanPlayer(playerSecondGamePlay)};
-      this.currentPlayer = this.playerFirst;
+      //this.gamePlay.showChoosePlayerType();
+
+      // Possible type of characters for each team
+      const possibleTypesFirstTeam = [Bowman, Swordsman, Magician];
+      const possibleTypesSecondTeam = [Vampire, Undead, Daemon];
+      this.possibleColumns = 2;
+
+      this.characterCountInTeam = gameLevel + 1;
+      this.maxLevel = gameLevel;
+
+      const axisOffsetFirst = 0;
+      const axisOffsetSecond = this.gamePlay.boardSize - this.possibleColumns;
+
+      this.playerFirst.ownTeam = this.initTeam(this.playerFirst.ownTeam, possibleTypesFirstTeam, axisOffsetFirst, this.playerFirst.enemyTeam);
+      this.playerSecond.ownTeam = this.initTeam(this.playerSecond.ownTeam, possibleTypesSecondTeam, axisOffsetSecond, this.playerSecond.enemyTeam);
+
+      this.playerFirst.enemyTeam = this.playerSecond.ownTeam;
+      this.playerSecond.enemyTeam = this.playerFirst.ownTeam;
+    } else {
+      console.log('state in start game', gameSavingData)
+      this.loadGame(gameSavingData);
     }
-
-    this.playerFirst.ownTeam = this.initTeam(this.playerFirst.ownTeam, possibleTypesFirstTeam, axisOffsetFirst, this.playerFirst.enemyTeam);
-    this.playerSecond.ownTeam = this.initTeam(this.playerSecond.ownTeam, possibleTypesSecondTeam, axisOffsetSecond, this.playerSecond.enemyTeam);
-
-    this.playerFirst.enemyTeam = this.playerSecond.ownTeam;
-    this.playerSecond.enemyTeam = this.playerFirst.ownTeam;
-
-
+    //console.log('first Owm',this.playerFirst.ownTeam);
+    //console.log('second Own',this.playerSecond.ownTeam);
     // Draw teams in start positions
     this.redraw();
+    //console.log('this current ownTeam', this.currentPlayer.ownTeam);
+    //console.log('this current enemyTeam', this.currentPlayer.enemyTeam);
+    //console.log('player', this.currentPlayer.player)
     this.currentPlayer.player.move(this.currentPlayer.ownTeam, this.currentPlayer.enemyTeam);
-    console.log('current', this.currentPlayer)
+  }
 
-    // TODO: load saved stated from stateService
+  initPlayers(playerFirstType, playerSecondType) {
+    const playerFirstGamePlay = new GamePlayWrapper(this.gamePlay, () => this.currentPlayer === this.playerFirst, this.doMove.bind(this));
+    const playerSecondGamePlay = new GamePlayWrapper(this.gamePlay, () => this.currentPlayer === this.playerSecond, this.doMove.bind(this));
+    if (!playerFirstType && !playerSecondType) {
+      this.playerFirst = {player: new HumanPlayer(playerFirstGamePlay), points: 0, nameTeam: 'Герои'};
+      this.playerSecond = {player: new ComputerPlayer(playerSecondGamePlay), points: 0, nameTeam: 'Нежить'};
+      return
+    }
+    if (playerFirstType === 'human') {
+      this.playerFirst = {player: new HumanPlayer(playerFirstGamePlay), points: 0, nameTeam: 'Герои'};
+    } else {
+      this.playerFirst = {player: new ComputerPlayer(playerFirstGamePlay), points: 0, nameTeam: 'Герои'};
+    }
+
+    if (playerSecondType === 'human') {
+      this.playerSecond = {player: new HumanPlayer(playerSecondGamePlay), points: 0, nameTeam: 'Нежить'};
+    } else {
+      this.playerSecond = {player: new ComputerPlayer(playerSecondGamePlay), points: 0, nameTeam: 'Нежить'};
+    }
   }
 
   initTeam(team, possibleTypes, axisOffset, enemyTeam) {
@@ -101,6 +145,7 @@ export default class GameController {
     return team;
   }
 
+
   redraw() {
     this.gamePlay.redrawPositions([...this.playerFirst.ownTeam, ...this.playerSecond.ownTeam]);
   }
@@ -109,23 +154,125 @@ export default class GameController {
     return this.playerFirst.ownTeam.find(x => x.position === index) || this.playerSecond.ownTeam.find(x => x.position === index);
   }
 
-  onCellClickOnNewGame(){
-    console.log('new game')
-    this.gameLevel = 1;
-    this.currentPlayer = undefined;
-    this.playerFirst = undefined;
-    this.playerSecond = undefined;
-    this.startGame(this.gameLevel)
+  loadState() {
+    let state;
+    try {
+      state = this.stateService.load();
+    } catch (e) {
+      console.log("Error loading state", e);
+      state = null;
+    }
+    return state
   }
-  onCellClickOnField(index) {
+
+  saveMaxPoints() {
+    let state = this.loadState();
+    if (!state || !state.gameSavingData) {
+      state = GameState.from(undefined, undefined, undefined, undefined, this.maxPoints);
+      this.stateService.save(state);
+      console.log('saveMaxPoints', this.maxPoints)
+    } else {
+      /*const newGameState = GameState.from(state.gameSavingData.playerFirst, state.gameSavingData.playerSecond,
+        state.gameSavingData.currentPlayer, state.gameSavingData.gameLevel, this.maxPoints);
+      this.stateService.save(newGameState)*/
+      state.globalData.maxPoints = this.maxPoints;
+      this.stateService.save(state)
+    }
+  }
+
+  createTeamFromLoad(arr) {
+    //console.log('arr from load',arr)
+    return arr.map(x => new PositionedCharacter(characterFactoryByType(x.character.type, x.character.health, x.character.level), x.position))
+    //return arr.map(x => ({character: characterFactoryByType(x.type, x.health, x.level), position: x.position}))
+  }
+
+  loadGame(gameSavingData) {
+    this.gameLevel = gameSavingData.gameLevel;
+    this.gamePlay.drawUi(themes[(this.gameLevel - 1) % themes.length]);
+
+    this.playerFirst.ownTeam = this.createTeamFromLoad(gameSavingData.playerFirst.ownTeam);
+    //console.log('gameSavingData loadGame', gameSavingData.playerFirst.ownTeam)
+    //this.playerFirst.ownTeam.createTeamFromLoad(gameSavingData.playerFirst.ownTeam);
+    //console.log('loadGame', this.playerFirst.ownTeam)
+    this.playerSecond.ownTeam = this.createTeamFromLoad(gameSavingData.playerSecond.ownTeam);
+    this.playerFirst.enemyTeam = this.playerSecond.ownTeam;
+    this.playerSecond.enemyTeam = this.playerFirst.ownTeam;
+    console.log('loadGame', this.playerFirst.ownTeam[0])
+    this.currentPlayer = gameSavingData.currentPlayer === 'first' ? this.playerFirst : this.playerSecond;
+    //console.log(this.currentPlayer)
+  }
+
+  onLoadGameClick() {
+    let state;
+    try {
+      state = this.stateService.load();
+    } catch (e) {
+      state.gameSavingData = null;
+    }
+    //console.log('state', state)
+
+    if (!state.gameSavingData) {
+      alert('Нет ни одной сохраненной игры')
+    } else {
+      this.startGame(state.gameSavingData)
+    }
+  }
+
+  onSaveGameClick() {
+    //console.log(this.currentPlayer);
+    console.log('player 1 OnSaveClick', this.playerFirst)
+    const currentPlayer = this.currentPlayer === this.playerFirst ? 'first' : 'second';
+    const gameState = GameState.from(this.playerFirst, this.playerSecond, currentPlayer, this.gameLevel, this.maxPoints);
+    console.log('gameState', gameState)
+    this.stateService.save(gameState)
+  }
+
+  onNewGameClick() {
+    this.currentPlayer = undefined;
+    this.gamePlay.showChoosePlayerType();
+    //this.startGame(undefined, this.gameLevel)
+  }
+
+  onStartGameClick() {
+    this.gameLevel = 1;
+    this.playerFirst.ownTeam = undefined;
+    this.playerSecond.ownTeam = undefined;
+    this.playerSecond.points = 0;
+    this.playerSecond.points = 0;
+    console.log('onStartGameClick', this.playerFirst.player.type);
+    const players = this.gamePlay.getPlayerType();
+    console.log(players)
+    if (this.playerFirst.player.type !== players.playerFirst || this.playerSecond.player.type !== players.playerSecond) {
+      this.initPlayers(players.playerFirst, players.playerSecond)
+    }
+
+    this.initNewGame()
+    //this.startGame(null, this.gameLevel)
+  }
+
+  onCellClick(index) {
     // TODO: react to click
     if (!this.currentPlayer && index) {
-      console.log('block')
+      return
     }
+    if (this.currentPlayer.player.type === playersTypes.computer) {
+      alert('Сейчас не ваш ход')
+    }
+
+  }
+
+  gameOver(winnerTeam) {
+    this.gamePlay.showGameOver(winnerTeam)
   }
 
   onCellEnter(index) {
     // TODO: react to mouse enter
+    if (!this.currentPlayer) {
+      return;
+    }
+    if (index && this.currentPlayer.player.type === playersTypes.computer) {
+      return
+    }
     let character = this.findCharacter(index);
     if (character) {
       // Show tooltip
@@ -133,39 +280,12 @@ export default class GameController {
       const message = `\u{1F396} ${character.level} \u{2694} ${character.attack} \u{1F6E1} ${character.defence} \u{2764} ${character.health}`
       this.gamePlay.showCellTooltip(message, index)
     }
-    if (index === null) {
-      console.log(event.target)
-    }
   }
 
   onCellLeave(index) {
     // TODO: react to mouse leave
     this.gamePlay.hideCellTooltip(index);
   }
-
-
-  /*computerActions() {
-    // If attack is possible
-    let indexForAttack = undefined;
-    let arrForTarget = [];
-    for (const selected of this.playerSecondTeam) {
-      const charIndex = selected.position;
-      for (const target of this.playerFirstTeam) {
-        const cellIndex = target.position;
-        if (calcTargetPossible(charIndex, cellIndex, selected.character.maxStep, this.gamePlay.boardSize)) {
-          arrForTarget.push(cellIndex);
-          this.selectedCharacter = selected;
-          this.selectedCell = cellIndex;
-          this.gamePlay.selectCell(this.selectedCell, selectedColors.targetForAttack)
-        }
-      }
-    }
-    if (arrForTarget.length > 0) {
-      indexForAttack = arrForTarget.length > 2 ? arrForTarget[generatorRandomNumber(0, arrForTarget.length - 1)] : arrForTarget[0];
-      const targetCharacter = this.playerFirstTeam.find(x => x.position === indexForAttack);
-      this.countingDamage(indexForAttack, targetCharacter)
-    }
-  }*/
 
   levelUp() {
     for (let character of this.currentPlayer.ownTeam) {
@@ -176,19 +296,27 @@ export default class GameController {
     }
     this.gameLevel++;
     if (this.gameLevel > this.maxGameLevel) {
+      const winnerTeam = this.currentPlayer.nameTeam;
+      console.log('gameOver', this.currentPlayer.nameTeam)
       this.currentPlayer = undefined;
+      this.gameOver(winnerTeam);
     } else {
-      this.startGame(this.gameLevel)
+      this.startGame(null, this.gameLevel)
     }
-
-
   }
 
   killCharacter(targetCharacter) {
-
     const charIndexEnemy = this.currentPlayer.enemyTeam.indexOf(targetCharacter)
-    this.currentPlayer.enemyTeam.splice(charIndexEnemy, 1)
+    this.currentPlayer.enemyTeam.splice(charIndexEnemy, 1);
+    this.recalculationPoints()
+  }
 
+  recalculationPoints() {
+    this.currentPlayer.points++;
+    if (this.maxPoints < this.currentPlayer.points) {
+      this.maxPoints = this.currentPlayer.points;
+      this.saveMaxPoints()
+    }
   }
 
   attackCharacter(indexFrom, indexTo) {
@@ -200,7 +328,7 @@ export default class GameController {
     this.gamePlay.deselectCell(indexFrom);
 
     (async () => {
-      await this.gamePlay.showDamage(indexTo, damage);
+      await this.gamePlay.showDamage(indexTo, Math.round(damage));
       this.redraw();
     })();
 
@@ -219,17 +347,22 @@ export default class GameController {
   doMove(indexFrom, indexTo) {
     // check player's move and do it
     //console.log('check')
+    //console.log('gameController')
     const character = this.currentPlayer.ownTeam.find(x => x.position === indexFrom)
-
+    //console.log(character)
+//console.log()
     if (!character) {
       return
     }
 
     if (!calcTargetPossible(indexFrom, indexTo, character.character.maxStep, this.gamePlay.boardSize)) {
+      //console.log('oops', indexTo, indexFrom)
       return;
+
     } else {
       if (!this.currentPlayer.enemyTeam.find(x => x.position === indexTo)) {
         //move character
+        //console.log('gameController move', indexTo, indexFrom)
         this.moveCharacter(indexFrom, indexTo)
       } else {
         // Attack
@@ -238,14 +371,22 @@ export default class GameController {
       }
     }
 
-    setTimeout(this.afterMove.bind(this), 10);
+    setTimeout(this.afterMove.bind(this), 100);
   }
 
   afterMove() {
     if (this.currentPlayer.enemyTeam.length === 0 || this.currentPlayer.ownTeam.length === 0) {
-      this.levelUp()
+      if (this.playerFirst.player.type !== this.playerSecond.player.type && this.currentPlayer.player.type === playersTypes.computer) {
+        const winnerTeam = this.currentPlayer.nameTeam;
+        console.log('gameOver',this.currentPlayer.nameTeam)
+        this.currentPlayer = undefined;
+        this.gameOver(winnerTeam);
+      } else {
+        this.levelUp()
+      }
     } else {
       this.currentPlayer = this.currentPlayer === this.playerFirst ? this.playerSecond : this.playerFirst;
+      this.gamePlay.showActiveTeam(this.currentPlayer.nameTeam);
       this.currentPlayer.player.move(this.currentPlayer.ownTeam, this.currentPlayer.enemyTeam)
     }
   }

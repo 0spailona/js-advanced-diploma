@@ -67,6 +67,12 @@ export default class Character {
         this.maxStep = 4;
         this.attackRange = 1;
         break;
+      default:
+        throw new Error(`Нет такого ${this.type} персонажа`)
     }
   }
+  createSimpleObject(){
+    return {type:this.type,level:this.level,health: this.health}
+  }
+
 }

@@ -42,9 +42,6 @@ export default class HumanPlayer extends Player {
     console.log('click')
     // check that index is valid target for move/attack
     // then call this.gamePlay.makeMove(this.selectedCharacter.position, index);
-    /*if (this.enemyTeam.find(x => x.position === index)) {
-      GamePlay.showError('Это не ваш персонаж! Выберете другого персонажа.');
-    }*/
 
     let character = this.allPositions.find(positionedCharacter => positionedCharacter.position === index);
     if (!character) {
