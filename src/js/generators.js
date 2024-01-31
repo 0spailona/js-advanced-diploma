@@ -22,7 +22,7 @@ export function* characterGenerator(allowedTypes, maxLevel) {
   // TODO: write logic here
   while (true) {
     let a = allowedTypes[generatorRandomNumber(0, allowedTypes.length)];
-    let b = generatorRandomNumber(1, maxLevel + 1);
+    let b = generatorRandomNumber(1, maxLevel);
     yield new a(b);
   }
 }

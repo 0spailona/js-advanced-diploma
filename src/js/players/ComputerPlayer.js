@@ -1,9 +1,7 @@
 import playersTypes from "./PlayersTypes";
 import Player from "../Player";
 import {calcTargetPossible} from "../utils";
-import selectedColors from "../selectedColors";
 import {generatorRandomNumber} from "../generators";
-import cursors from "../cursors";
 import {calcPossibleSteps} from "../utils";
 
 export default class ComputerPlayer extends Player {
@@ -18,7 +16,6 @@ export default class ComputerPlayer extends Player {
     this.computerTeam = playerTeam;
     this.enemyTeam = enemyTeam;
     this.allPositions = [...this.computerTeam, ...this.enemyTeam];
-   // console.log('computer move')
 
     this.computerActions()
   }
@@ -39,45 +36,21 @@ export default class ComputerPlayer extends Player {
         from = arrCouplesForAttack[0].ownCharacter.position;
         to = arrCouplesForAttack[0].enemyCharacter.position;
       }
-      // For beauty
-      /* this.selectedCharacterPosition = from;
-       this.selectedCell = to;
-       this.gamePlay.selectCell(this.selectedCharacterPosition, selectedColors.playerCharacterSelected)
-       this.gamePlay.selectCell(this.selectedCell, selectedColors.targetForAttack)
-       //this.cleanupSelection()*/
+
       this.gamePlay.makeMove(from, to)
       return
     }
 
-    // Check is under attack
-    /*const arrCouplesForEscape = this.isUnderAttack();
-    if (arrCouplesForEscape.length > 0) {
-      if(arrCouplesForEscape.length > 1){
-        console.log('need choose character')
-      } else {
-        from = arrCouplesForEscape[0].ownCharacter.position;
-        to = ''
-      }
-      console.log('Escape', arrCouplesForEscape)
-      return;
-    }*/
     this.findPossibleStep();
     // Choose Step
     const character = this.arrPossibleSteps[generatorRandomNumber(0, this.arrPossibleSteps.length - 1)];
     from = character.ownCharacter.position;
-    //console.log(character.possibleSteps)
     to = character.possibleSteps[generatorRandomNumber(0, character.possibleSteps.length - 1)];
-    //console.log('makeMove', from, to)
-    /*this.selectedCharacterPosition = from;
-    this.selectedCell = to;
-    this.gamePlay.selectCell(this.selectedCharacterPosition, selectedColors.playerCharacterSelected)
-    this.gamePlay.selectCell(this.selectedCell, selectedColors.cellForStep)*/
     this.cleanupSelection()
     this.gamePlay.makeMove(from, to)
   }
 
   changeTarget(arrCouplesForAttack) {
-    //console.log('need change target')
     let arrInfo = [];
     let maxDamage = 0;
     for (const coupleForAttack of arrCouplesForAttack) {
@@ -105,40 +78,13 @@ export default class ComputerPlayer extends Player {
       const ownCharIndex = ownChar.position;
       for (const enemyChar of this.enemyTeam) {
         const enemyCharIndex = enemyChar.position;
-        if (calcTargetPossible(ownCharIndex, enemyCharIndex, ownChar.character.maxStep, this.gamePlay.boardSize)) {
+        if (calcTargetPossible(ownCharIndex, enemyCharIndex, ownChar.character.attackRange, this.gamePlay.boardSize)) {
           arrCouplesForAttack.push(this.createCouple(ownCharIndex, enemyCharIndex))
         }
       }
     }
     return arrCouplesForAttack
   }
-
-  isUnderAttack() {
-    let arrCharsUnderAttack = [];
-    for (const enemyChar of this.enemyTeam) {
-      const enemyCharIndex = enemyChar.position;
-      for (const ownChar of this.computerTeam) {
-        const onwCharIndex = ownChar.position;
-        if (calcTargetPossible(enemyCharIndex, onwCharIndex, enemyCharIndex.character.maxStep, this.gamePlay.boardSize)) {
-          arrCharsUnderAttack.push(this.createCouple())
-        }
-      }
-    }
-   // console.log('under attack', arrCharsUnderAttack)
-    return arrCharsUnderAttack
-  }
-
-  isSafePositions(index) {
-    let arrSafePositions = [];
-    for (const enemyChar of this.enemyTeam) {
-      const enemyCharIndex = enemyChar.position;
-      if (!calcTargetPossible(enemyCharIndex, index, enemyChar.character.maxStep, this.gamePlay.boardSize)) {
-        arrSafePositions.push(index)
-      }
-    }
-    return arrSafePositions
-  }
-
 
   findPossibleStep() {
     this.arrPossibleSteps = [];
@@ -153,7 +99,6 @@ export default class ComputerPlayer extends Player {
         ownCharacter: owmChar,
         possibleSteps: possibleSteps
       })
-     // console.log('possible', possibleSteps, owmChar.position)
     }
   }
 
@@ -184,5 +129,4 @@ export default class ComputerPlayer extends Player {
       this.arrPossibleSteps = []
     }
   }
-
 }

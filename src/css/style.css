@@ -255,7 +255,7 @@ body {
 }
 
 .info-and-settings-wrp {
-  margin: 40px auto;
+  margin: 40px auto 5px auto;
   flex-direction: column;
   font-weight: 400;
   font: 16px Arial;
@@ -292,4 +292,15 @@ body {
 .game-over {
   display: none;
   /*display: flex;*/
+}
+
+.info-message{
+  display: flex;
+  margin:  auto;
+  flex-direction: column;
+  font-weight: 400;
+  font: 16px Arial;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #212529;
 }

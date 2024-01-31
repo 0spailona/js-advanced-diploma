@@ -134,19 +134,13 @@ export function calcPossibleSteps(charIndex, maxRange, boardSize, arrImpossibleI
 
   arr = arr.filter(i => !arrImpossibleIndex.includes(i));
 
-  //console.log("possible moves", charIndex, charCoordinates, arr.map(i => getCoordinates(i, boardSize)));
-
-  /*
-  while (arrImpossibleIndex.length > 0) {
-    const impossibleIndex = arrImpossibleIndex[0];
-    if (arr.includes(impossibleIndex)) {
-      arr.splice(arr.indexOf(impossibleIndex), 1)
-    }
-    arrImpossibleIndex.splice(0, 1)
-  }
-  */
   return arr
 }
+
+export function getTooltipText(character){
+  return `\u{1F396} ${character.level} \u{2694} ${character.attack} \u{1F6E1} ${character.defence} \u{2764} ${character.health}`
+}
+
 
 
 

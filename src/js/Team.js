@@ -1,4 +1,4 @@
-import {characterFactoryByType} from "./generators";
+
 /**
  * Класс, представляющий персонажей команды
  *

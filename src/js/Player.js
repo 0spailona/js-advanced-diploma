@@ -1,4 +1,4 @@
-export default class Player{
+export default class Player {
   constructor(type) {
     this.type = type;
   }

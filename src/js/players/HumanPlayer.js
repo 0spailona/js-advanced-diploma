@@ -23,7 +23,7 @@ export default class HumanPlayer extends Player {
     this.allPositions = [...this.playerTeam, ...this.enemyTeam];
   }
 
-  cleanupSelection(){
+  cleanupSelection() {
     if (this.selectedCharacter) {
       this.gamePlay.deselectCell(this.selectedCharacter.position);
       this.selectedCharacter = null;
@@ -39,9 +39,6 @@ export default class HumanPlayer extends Player {
   }
 
   onCellClick(index) {
-    console.log('click')
-    // check that index is valid target for move/attack
-    // then call this.gamePlay.makeMove(this.selectedCharacter.position, index);
 
     let character = this.allPositions.find(positionedCharacter => positionedCharacter.position === index);
     if (!character) {
@@ -71,17 +68,16 @@ export default class HumanPlayer extends Player {
       return
     }
 
-
-
     // Attack and error trying to change enemy character without attack
+
     const targetCharacter = this.enemyTeam.find(x => x.position === index);
     if (targetCharacter) {
-      if (this.selectedCharacter && this.selectedCell === index) {
+      if ((this.selectedCharacter && this.selectedCell === index) &&
+        (calcTargetPossible(this.selectedCharacter.position, index, this.selectedCharacter.character.attackRange, this.gamePlay.boardSize))) {
         const from = this.selectedCharacter.position;
         const to = this.selectedCell;
         this.cleanupSelection();
         this.gamePlay.makeMove(from, to);
-
       } else {
         GamePlay.showError('Это не ваш персонаж! Выберете другого персонажа.');
       }
@@ -89,7 +85,6 @@ export default class HumanPlayer extends Player {
   }
 
   onCellLeave(index) {
-
     this.gamePlay.setCursor(cursors.auto)
     if (this.selectedCharacter?.position !== index) {
       this.selectedCell = undefined;
@@ -98,19 +93,18 @@ export default class HumanPlayer extends Player {
   }
 
   onCellEnter(index) {
-
     let character = this.allPositions.find(x => x.position === index);
     if (!character) {
 
       // Select cell, if character can move to cell
       if (this.selectedCharacter) {
-        this.showPossibleSteps(index, cursors.pointer, selectedColors.cellForStep)
+        this.showPossibleSteps(index, cursors.pointer, selectedColors.cellForStep, this.selectedCharacter.character.maxStep)
       }
       return
     }
     // Select cell and change cursor, if character can attack
     if (this.selectedCharacter && this.enemyTeam.find(x => x.position === index)) {
-      this.showPossibleSteps(index, cursors.crosshair, selectedColors.targetForAttack)
+      this.showPossibleSteps(index, cursors.crosshair, selectedColors.targetForAttack, this.selectedCharacter.character.attackRange)
       return;
     }
     // Change cursor, if player can choose this character
@@ -124,12 +118,11 @@ export default class HumanPlayer extends Player {
     }
   }
 
-  showPossibleSteps(index, cursor, color) {
-    if (calcTargetPossible(this.selectedCharacter.position, index, this.selectedCharacter.character.maxStep, this.gamePlay.boardSize)) {
+  showPossibleSteps(index, cursor, color, maxDistance) {
+    if (calcTargetPossible(this.selectedCharacter.position, index, maxDistance, this.gamePlay.boardSize)) {
       this.gamePlay.setCursor(cursor);
       this.gamePlay.selectCell(index, color);
       this.selectedCell = index;
     }
   }
-
 }

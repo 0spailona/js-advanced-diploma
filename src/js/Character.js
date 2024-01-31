@@ -15,19 +15,18 @@ import {CharacterType} from "./characters/CharacterType";
  * vampire
  */
 export default class Character {
-  constructor(level, type ) {
-    if (!level){
+  constructor(level, type) {
+    if (!level) {
       throw new Error('Вы не можете создать персонажа без уровня')
     }
+
     this.level = level;
-    /*this.attack = 0;
-    this.defence = 0;*/
-    this.health = 50;
+    this.health = 100;
     this.type = type;
     // TODO: выбросите исключение, если кто-то использует "new Character()"
 
-    if (new.target.name === 'Character'){
-      throw new Error ('Вы не можете создать персонажа без типа')
+    if (new.target.name === 'Character') {
+      throw new Error('Вы не можете создать персонажа без типа')
     }
     switch (this.type) {
       case CharacterType.Bowman:
@@ -68,11 +67,23 @@ export default class Character {
         this.attackRange = 1;
         break;
       default:
-        throw new Error(`Нет такого ${this.type} персонажа`)
+        throw new Error(`Нет такого персонажа - ${this.type}`);
+    }
+    if (this.level > 1) {
+      let n = 1;
+      while (n < this.level) {
+        n++
+        this.levelUp()
+      }
     }
   }
-  createSimpleObject(){
-    return {type:this.type,level:this.level,health: this.health}
+
+  levelUp() {
+    this.attack = Math.max(this.attack, this.attack * (80 + this.health) / 100);
+    this.defence = Math.max(this.defence, this.defence * (80 + this.health) / 100);
   }
 
+  createSimpleObject() {
+    return {type: this.type, level: this.level, health: this.health}
+  }
 }

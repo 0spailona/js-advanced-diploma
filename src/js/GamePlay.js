@@ -1,5 +1,4 @@
 import {calcHealthLevel, calcTileType} from './utils';
-//import selectedColors from "./selectedColors";
 
 export default class GamePlay {
   constructor() {
@@ -54,7 +53,7 @@ export default class GamePlay {
                 Тип игрока команды людей
              </label>
              <select id="player-first">
-               <option value="human" selected>Человек</option>
+               <option selected value="human">Человек</option>
                <option value="computer">Компьютер</option>
              </select>
           </div>
@@ -63,16 +62,19 @@ export default class GamePlay {
               Тип игрока команды нежити
             </label>
             <select id="player-second">
-              <option value="computer" selected>Компьютер</option>
+              <option selected value="computer">Компьютер</option>
               <option value="human">Человек</option>
             </select>
           </div>
-            <button data-id="start-game" class="info-and-settings  btn" style="width: 20%">Start game</button>
+            <button class="info-and-settings  btn" data-id="start-game" style="width: 20%">Start game</button>
           </div>
           
           <div class="game-over info-and-settings-wrp" style="width: calc(var(--cell-size) * ${this.boardSize});">
             <span class="info-and-settings show-end">Game Over</span>
             <span class="info-and-settings winner-player"></span>
+        </div>
+        <div class="info-message" style="width: calc(var(--cell-size) * ${this.boardSize});">
+            <span class="info-and-settings show-message"></span>
         </div>
      
     `;
@@ -87,14 +89,11 @@ export default class GamePlay {
     this.playerFirstEl = document.getElementById('player-first');
     this.playerSecondEl = document.getElementById('player-second');
     this.gameOverInfoEl = this.container.querySelector('.game-over');
+    this.showMessageEl = this.container.querySelector('.show-message');
 
     this.newGameEl.addEventListener('click', event => this.onNewGameClick(event));
     this.saveGameEl.addEventListener('click', event => this.onSaveGameClick(event));
     this.loadGameEl.addEventListener('click', event => this.onLoadGameClick(event));
-
-
-    //this.highScoreEl = this.container.querySelector('.high-score');
-    //console.log(this.highScoreEl.textContent)
 
     this.boardEl = this.container.querySelector('[data-id=board]');
 
@@ -235,12 +234,17 @@ export default class GamePlay {
   }
 
   static showError(message) {
-    console.log('alert', message)
-    alert(message);
+    document.querySelector('.show-message').textContent = message;
+    setTimeout(() => {
+      document.querySelector('.show-message').textContent = ''
+    }, 3000)
   }
 
   static showMessage(message) {
-    alert(message);
+    document.querySelector('.show-message').textContent = message;
+    setTimeout(() => {
+      document.querySelector('.show-message').textContent = ''
+    }, 3000)
   }
 
   selectCell(index, color) {
@@ -311,6 +315,6 @@ export default class GamePlay {
     this.gameInfoEl.style.display = 'none';
     this.gameOverInfoEl.style.display = 'flex';
     this.gameOverInfoEl.querySelector('.winner-player').innerText = `Победила команда: ${string}`
-
   }
+
 }

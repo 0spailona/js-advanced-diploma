@@ -1,4 +1,3 @@
-
 const playersTypes = {
   human: 'human',
   computer: 'computer'
