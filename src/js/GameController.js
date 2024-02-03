@@ -54,7 +54,7 @@ export default class GameController {
 
     const state = this.loadState();
 
-    this.maxPoints =  (state ? state.globalData.maxPoints : 0) || 0;
+    this.maxPoints = (state ? state.globalData.maxPoints : 0) || 0;
     this.gamePlay.showHighScore(this.maxPoints)
     this.startGame(null, 1)
   }
@@ -167,7 +167,7 @@ export default class GameController {
   loadGame(gameSavingData) {
     this.gameLevel = gameSavingData.gameLevel;
     this.gamePlay.drawUi(themes[(this.gameLevel - 1) % themes.length]);
-
+    console.log('loadGame', gameSavingData.playerFirst.ownTeam)
     this.playerFirst.ownTeam = this.createTeamFromLoad(gameSavingData.playerFirst.ownTeam);
     this.playerSecond.ownTeam = this.createTeamFromLoad(gameSavingData.playerSecond.ownTeam);
     this.playerFirst.enemyTeam = this.playerSecond.ownTeam;
@@ -178,14 +178,9 @@ export default class GameController {
   }
 
   onLoadGameClick() {
-    let state;
-    try {
-      state = this.stateService.load();
-    } catch (e) {
-      state.gameSavingData = null;
-    }
+    const state = this.loadState();
 
-    if (!state.gameSavingData) {
+    if (!state || !state.gameSavingData) {
       GamePlay.showMessage('Нет ни одной сохраненной игры')
     } else {
       this.startGame(state.gameSavingData)

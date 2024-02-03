@@ -6,7 +6,7 @@ import {calcPossibleSteps} from "../utils";
 
 export default class ComputerPlayer extends Player {
   constructor(gamePlayerWrapper) {
-    super(playersTypes.computer)
+    super(playersTypes.computer,gamePlayerWrapper)
 
     this.gamePlay = gamePlayerWrapper;
   }
@@ -16,10 +16,21 @@ export default class ComputerPlayer extends Player {
     this.computerTeam = playerTeam;
     this.enemyTeam = enemyTeam;
     this.allPositions = [...this.computerTeam, ...this.enemyTeam];
-
-    this.computerActions()
   }
+  cleanupSelection() {
+    if (this.selectedCharacterPosition) {
+      this.gamePlay.deselectCell(this.selectedCharacterPosition);
+      this.selectedCharacterPosition = null;
+    }
 
+    if (this.selectedCell != null) {
+      this.gamePlay.deselectCell(this.selectedCell);
+      this.selectedCell = null;
+    }
+    if (this.arrPossibleSteps) {
+      this.arrPossibleSteps = []
+    }
+  }
   computerActions() {
     let from;
     let to;
@@ -115,18 +126,5 @@ export default class ComputerPlayer extends Player {
     }
   }
 
-  cleanupSelection() {
-    if (this.selectedCharacterPosition) {
-      this.gamePlay.deselectCell(this.selectedCharacterPosition);
-      this.selectedCharacterPosition = null;
-    }
 
-    if (this.selectedCell != null) {
-      this.gamePlay.deselectCell(this.selectedCell);
-      this.selectedCell = null;
-    }
-    if (this.arrPossibleSteps) {
-      this.arrPossibleSteps = []
-    }
-  }
 }

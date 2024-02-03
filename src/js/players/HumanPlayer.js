@@ -7,7 +7,7 @@ import {calcTargetPossible} from "../utils";
 
 export default class HumanPlayer extends Player {
   constructor(gamePlayerWrapper) {
-    super(playersTypes.human)
+    super(playersTypes.human,gamePlayerWrapper)
     this.gamePlay = gamePlayerWrapper;
     this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
     this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
